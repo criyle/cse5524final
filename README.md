@@ -2,9 +2,9 @@
 
 ## Workload
 
-- [ ] Data generation (Yang) Expecting to finish before Apr 10
+- [x] Data generation (Yang)
 - [ ] Model Training
-  - [ ] Baseline (Yang)
+  - [ ] Baseline (Yang) Expecting to finish before Apr 10
   - [ ] Contrastive Learning (Adrian)
   - [ ] Advanced models like ViT (Adrian)
 - [ ] Result Visualization (William)

@@ -1,0 +1,8 @@
+pillow
+torch
+torchvision
+numpy
+matplotlib
+datasets
+transformers
+ipywidgets
