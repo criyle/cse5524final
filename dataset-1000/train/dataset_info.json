@@ -1,0 +1,54 @@
+{
+  "citation": "",
+  "description": "",
+  "features": {
+    "image": {
+      "_type": "Image"
+    },
+    "config": {
+      "angle": {
+        "dtype": "int64",
+        "_type": "Value"
+      },
+      "center": {
+        "feature": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "_type": "Sequence"
+      },
+      "color": {
+        "feature": {
+          "dtype": "uint8",
+          "_type": "Value"
+        },
+        "_type": "Sequence"
+      },
+      "color_name": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "radius": {
+        "dtype": "int64",
+        "_type": "Value"
+      },
+      "shape": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "side_length": {
+        "dtype": "int64",
+        "_type": "Value"
+      },
+      "start": {
+        "feature": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "_type": "Sequence"
+      }
+    }
+  },
+  "homepage": "",
+  "license": ""
+}
