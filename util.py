@@ -4,6 +4,12 @@ from datasets import load_from_disk
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import pickle
+from scipy.optimize import linear_sum_assignment
+from sklearn.metrics import silhouette_score, normalized_mutual_info_score, confusion_matrix
+from sklearn.cluster import KMeans
+import numpy as np
+import seaborn as sns
 
 
 class GeneratedDataset(Dataset):
@@ -91,26 +97,133 @@ def plot_model(model, train_losses, test_losses, testset):
     # Show some examples of reconstruction
     model.eval()
     with torch.no_grad():
-        for i in range(5):  # Show 5 examples
+        plt.figure(figsize=(12, 9))
+        for i in range(6):
             inputs = testset[i].unsqueeze(0)  # Add batch dimension
             inputs = inputs
             outputs, _ = model(inputs.to(device))
             outputs = outputs.to('cpu')
 
-            plt.figure(figsize=(6, 3))
-
             # Original Image
-            plt.subplot(1, 2, 1)
+            plt.subplot(3, 4, 2*i + 1)
             plt.imshow(inputs.squeeze().permute(1, 2, 0).numpy())
             plt.title('Original Image')
 
             # Reconstructed Image
-            plt.subplot(1, 2, 2)
+            plt.subplot(3, 4, 2*i + 2)
             plt.imshow(outputs.squeeze().permute(1, 2, 0).numpy())
             plt.title('Reconstructed Image')
 
-            plt.show()
+        plt.tight_layout()
+        plt.show()
 
 
 def count_parameters(model: nn.Module):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+COLORS = ['red', 'orange', 'green', 'purple',
+          'blue', 'cyan', 'brown', 'yellow']
+SHAPES = ['circle', 'square', 'triangle']
+color_mapping = {label: idx for idx, label in enumerate(COLORS)}
+shape_mapping = {label: idx for idx, label in enumerate(SHAPES)}
+
+
+def calc_label(color, shape):
+    return color_mapping[color] * len(SHAPES) + shape_mapping[shape]
+
+
+def calculate_cluster_purity(labels_true, labels_pred):
+    contingency_matrix = np.zeros(
+        (len(set(labels_true)), len(set(labels_pred))), dtype=int)
+
+    for true_label, pred_label in zip(labels_true, labels_pred):
+        contingency_matrix[true_label, pred_label] += 1
+
+    # Calculate purity
+    purity = np.sum(np.max(contingency_matrix, axis=0)) / \
+        np.sum(contingency_matrix)
+    return purity
+
+
+def fit_kmean(labels_np, embeddings_np):
+    kmeans = KMeans(n_clusters=len(set(labels_np)))
+    labels_pred = kmeans.fit_predict(embeddings_np)
+
+    # Create a contingency matrix
+    contingency_matrix = np.zeros(
+        (len(set(labels_np)), len(set(labels_pred))), dtype=int)
+
+    for true_label, pred_label in zip(labels_np, labels_pred):
+        contingency_matrix[true_label, pred_label] += 1
+
+    # Use the Hungarian algorithm to find the best matching
+    row_ind, col_ind = linear_sum_assignment(-contingency_matrix)
+
+    mapped_labels_pred = np.zeros_like(labels_pred)
+    for i, j in zip(row_ind, col_ind):
+        mapped_labels_pred[labels_pred == j] = i
+
+    return mapped_labels_pred
+
+
+def calculate_embeddings(model: nn.Module, testset: Dataset):
+    model.eval()
+    embeddings = None
+    testloader = DataLoader(testset, batch_size=16, shuffle=False)
+    with torch.no_grad():
+        for data in testloader:
+            inputs = data.to(device)
+            _, encoded = model(inputs)
+            encoded = encoded.to('cpu')
+            embeddings = torch.vstack(
+                (embeddings, encoded)) if embeddings is not None else encoded
+    return embeddings
+
+
+def calculate_metrics(model: nn.Module, testset: Dataset):
+    embeddings = calculate_embeddings(model, testset)
+    labels = list([calc_label(x['config']['color_name'], x['config']['shape'])
+                  for x in testset.dataset])
+
+    embeddings_np = embeddings.numpy()
+    labels_np = np.array(labels)
+
+    labels_pred = fit_kmean(labels_np, embeddings_np)
+
+    sil_score = silhouette_score(embeddings_np, labels_np)
+    purity = calculate_cluster_purity(labels_np, labels_pred)
+    nmi_score = normalized_mutual_info_score(labels_np, labels_pred)
+    conf_matrix = confusion_matrix(labels_np, labels_pred)
+
+    return {
+        'sil_score': sil_score,
+        'cluster_purity': purity,
+        'nmi_score': nmi_score,
+        'conf_matrix': conf_matrix,
+    }
+
+
+def print_matrix(metrics):
+    print(f"Silhouette Score: {metrics['sil_score']}")
+    print(f"Cluster Purity: {metrics['cluster_purity']}")
+    print(f"Normalized Mutual Information (NMI): {metrics['nmi_score']}")
+
+
+def plot_conf_matrix(conf_matrix):
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.title('Confusion Matrix')
+    plt.show()
+
+
+def save_to_file(data, name):
+    with open(name, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def load_from_file(name):
+    with open(name, 'rb') as f:
+        return pickle.load(f)
