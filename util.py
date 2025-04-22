@@ -1,3 +1,5 @@
+import torchvision.transforms as transforms
+from sklearn.neighbors import NearestNeighbors
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
@@ -308,3 +310,58 @@ def save_to_file(data, name):
 def load_from_file(name):
     with open(name, 'rb') as f:
         return pickle.load(f)
+
+
+def fit_nearest_neighbor(model):
+    training_set = GeneratedDataset('dataset-1000', transforms.ToTensor())
+    test_set = GeneratedDataset('dataset-test', transforms.ToTensor())
+
+    train_embeddings = calculate_embeddings(model, training_set)
+    test_embeddings = calculate_embeddings(model, test_set)
+
+    # Convert embeddings to tensors
+    train_embeddings = torch.tensor(train_embeddings)
+    test_embeddings = torch.tensor(test_embeddings)
+
+    # Initialize NearestNeighbors model
+    nbrs = NearestNeighbors(
+        n_neighbors=5, algorithm='auto').fit(train_embeddings)
+
+    # Find the nearest neighbors for each test embedding
+    distances, indices = nbrs.kneighbors(test_embeddings)
+
+    # Match shape & color & all
+    color = 0
+    shape = 0
+    all = 0
+    for i in range(len(test_set)):
+        t_shape = test_set.dataset[i]['config']['shape']
+        t_color = test_set.dataset[i]['config']['color_name']
+
+        p_shape = training_set.dataset[int(indices[i, 0])]['config']['shape']
+        p_color = training_set.dataset[int(
+            indices[i, 0])]['config']['color_name']
+
+        if t_shape == p_shape:
+            shape += 1
+        if t_color == p_color:
+            color += 1
+        if t_shape == p_shape and t_color == p_color:
+            all += 1
+
+    print(f'Color Accuracy: {color / len(test_set)}')
+    print(f'Shape Accuracy: {shape / len(test_set)}')
+    print(f'Combined Accuracy: {all / len(test_set)}')
+
+    # Plot the images of the top 5 nearest neighbors for each test embedding
+    for i in range(5):
+        plt.figure(figsize=(10, 2))
+        plt.suptitle(f'Test Example {i+1}')
+        plt.subplot(1, 6, 1)
+        plt.imshow(test_set.dataset[int(i)]['image'])
+        for j, idx in enumerate(indices[i]):
+            plt.subplot(1, 6, j+2)
+            plt.imshow(training_set.dataset[int(idx)]['image'])
+            plt.title(f'Neighbor {j+1}')
+            plt.axis('off')
+        plt.show()
