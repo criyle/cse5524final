@@ -1,3 +1,4 @@
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
 from datasets import load_from_disk
@@ -70,6 +71,62 @@ def train_model_steps(model: nn.Module, trainloader: DataLoader, testloader: Dat
                 inputs = data.to(device)
                 outputs, _ = model(inputs)
                 loss = criterion(outputs, inputs)
+                test_loss += loss.item()
+
+        test_loss /= len(testloader)
+        test_losses.append(test_loss)
+
+        print(
+            f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}')
+        scheduler.step()
+
+    # Save the model
+    return model, train_losses, test_losses
+
+
+def loss_function(recon_x, x, mean, logvar):
+    BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+    KLD = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
+    return BCE + KLD
+
+
+def train_vae_model_steps(model: nn.Module, trainloader: DataLoader, testloader: DataLoader, learning_rate=1e-4, weight_decay=1e-5, num_epochs=20):
+    # Initialize the model, loss function, and optimizer
+    optimizer = optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=num_epochs)
+
+    # Arrays to store training and testing loss
+    train_losses = []
+    test_losses = []
+
+    model = model.to(device)
+
+    # Training the autoencoder
+    for epoch in range(num_epochs):
+        model.train()
+        train_loss = 0
+        for data in trainloader:
+            inputs = data.to(device)
+            outputs, mean, logvar = model(inputs)
+            loss = loss_function(outputs, inputs, mean, logvar)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
+
+        train_loss /= len(trainloader)
+        train_losses.append(train_loss)
+
+        model.eval()
+        test_loss = 0
+        with torch.no_grad():
+            for data in testloader:
+                inputs = data.to(device)
+                outputs, mean, logvar = model(inputs)
+                loss = loss_function(outputs, inputs, mean, logvar)
                 test_loss += loss.item()
 
         test_loss /= len(testloader)

@@ -2,9 +2,9 @@
 
 ## Workload
 
-- [x] Data generation (Yang) (update Apr 18, added more variance)
-- [ ] Model Training
-  - [ ] Baseline (Yang) Targeting Apr 19
+- [x] Data generation (Yang)
+- [x] Model Training
+  - [x] Baseline (Yang) Targeting Apr 19
   - [ ] Contrastive Learning (Adrian)
   - [ ] Advanced models like ViT (Adrian)
 - [ ] Result Visualization (William)
@@ -25,7 +25,14 @@ In theory, the dataset could be compressed into [shape, colors, (r, g, b), (x, y
 
 CNN-based auto encoder
 
-TODO
+- Add Layer Norm
+- Add Residual Connection
+- Add Drop Out
+- Add More Layers
+
+Transformer-based auto encoder
+
+Variance Auto Encoder
 
 ## Contrastive
 
