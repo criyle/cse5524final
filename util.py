@@ -181,14 +181,7 @@ def calculate_embeddings(model: nn.Module, testset: Dataset):
     return embeddings
 
 
-def calculate_metrics(model: nn.Module, testset: Dataset):
-    embeddings = calculate_embeddings(model, testset)
-    labels = list([calc_label(x['config']['color_name'], x['config']['shape'])
-                  for x in testset.dataset])
-
-    embeddings_np = embeddings.numpy()
-    labels_np = np.array(labels)
-
+def calculate_one_metrics(embeddings_np, labels_np):
     labels_pred = fit_kmean(labels_np, embeddings_np)
 
     sil_score = silhouette_score(embeddings_np, labels_np)
@@ -204,10 +197,41 @@ def calculate_metrics(model: nn.Module, testset: Dataset):
     }
 
 
-def print_matrix(metrics):
+def calculate_metrics(model: nn.Module, testset: Dataset):
+    embeddings = calculate_embeddings(model, testset)
+    labels = list([calc_label(x['config']['color_name'], x['config']['shape'])
+                  for x in testset.dataset])
+
+    embeddings_np = embeddings.numpy()
+    all_labels = np.array(labels)
+
+    color_labels = np.array(
+        [color_mapping[x['config']['color_name']] for x in testset.dataset])
+
+    shape_labels = np.array([shape_mapping[x['config']['shape']]
+                            for x in testset.dataset])
+
+    return {
+        'all': calculate_one_metrics(embeddings_np, all_labels),
+        'color': calculate_one_metrics(embeddings_np, color_labels),
+        'shape': calculate_one_metrics(embeddings_np, shape_labels),
+    }
+
+
+def print_metrics(metrics):
     print(f"Silhouette Score: {metrics['sil_score']}")
     print(f"Cluster Purity: {metrics['cluster_purity']}")
     print(f"Normalized Mutual Information (NMI): {metrics['nmi_score']}")
+
+
+def calc_and_plot_metrics(model: nn.Module, testset: Dataset):
+    metrics = calculate_metrics(model, testset)
+    print_metrics(metrics['all'])
+    plot_conf_matrix(metrics['all']['conf_matrix'])
+    print_metrics(metrics['color'])
+    plot_conf_matrix(metrics['color']['conf_matrix'])
+    print_metrics(metrics['shape'])
+    plot_conf_matrix(metrics['shape']['conf_matrix'])
 
 
 def plot_conf_matrix(conf_matrix):
