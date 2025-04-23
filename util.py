@@ -1,3 +1,5 @@
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 import torchvision.transforms as transforms
 from sklearn.neighbors import NearestNeighbors
 import torch.nn.functional as F
@@ -312,6 +314,61 @@ def load_from_file(name):
         return pickle.load(f)
 
 
+def calc_and_plot_conf_matrix(label, pred):
+    contingency_matrix = np.zeros(
+        (len(set(label)), len(set(pred))), dtype=int)
+
+    for true_label, pred_label in zip(label, pred):
+        contingency_matrix[true_label, pred_label] += 1
+
+    plot_conf_matrix(contingency_matrix)
+
+
+PLOT_SHAPE = ['o', 's', '^']
+
+# t-SNE Visualization
+
+
+def tsne_visualization(embeddings, colors, shapes):
+    tsne = TSNE(n_components=2, random_state=42)
+    tsne_results = tsne.fit_transform(embeddings)
+    colors = np.array([COLORS[x] for x in colors])
+    shapes = np.array([PLOT_SHAPE[x] for x in shapes])
+
+    plt.figure(figsize=(10, 10))
+    unique_combinations = set(zip(colors, shapes))
+    for color, shape in unique_combinations:
+        indices = (colors == color) & (shapes == shape)
+        plt.scatter(tsne_results[indices, 0], tsne_results[indices, 1],
+                    c=color, marker=shape, label=f'{color}-{shape}')
+    plt.title('t-SNE Visualization')
+    plt.xlabel('Dimension 1')
+    plt.ylabel('Dimension 2')
+    # plt.legend()
+    plt.show()
+
+# PCA Visualization
+
+
+def pca_visualization(embeddings, colors, shapes):
+    pca = PCA(n_components=2)
+    pca_results = pca.fit_transform(embeddings)
+    colors = np.array([COLORS[x] for x in colors])
+    shapes = np.array([PLOT_SHAPE[x] for x in shapes])
+
+    plt.figure(figsize=(10, 10))
+    unique_combinations = set(zip(colors, shapes))
+    for color, shape in unique_combinations:
+        indices = (colors == color) & (shapes == shape)
+        plt.scatter(pca_results[indices, 0], pca_results[indices, 1],
+                    c=color, marker=shape, label=f'{color}-{shape}')
+    plt.title('PCA Visualization')
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+    # plt.legend()
+    plt.show()
+
+
 def fit_nearest_neighbor(model):
     training_set = GeneratedDataset('dataset-1000', transforms.ToTensor())
     test_set = GeneratedDataset('dataset-test', transforms.ToTensor())
@@ -334,6 +391,10 @@ def fit_nearest_neighbor(model):
     color = 0
     shape = 0
     all = 0
+    color_label = []
+    color_pred = []
+    shape_label = []
+    shape_pred = []
     for i in range(len(test_set)):
         t_shape = test_set.dataset[i]['config']['shape']
         t_color = test_set.dataset[i]['config']['color_name']
@@ -349,19 +410,32 @@ def fit_nearest_neighbor(model):
         if t_shape == p_shape and t_color == p_color:
             all += 1
 
+        color_label.append(color_mapping[t_color])
+        color_pred.append(color_mapping[p_color])
+        shape_label.append(shape_mapping[t_shape])
+        shape_pred.append(shape_mapping[p_shape])
+
     print(f'Color Accuracy: {color / len(test_set)}')
     print(f'Shape Accuracy: {shape / len(test_set)}')
     print(f'Combined Accuracy: {all / len(test_set)}')
 
     # Plot the images of the top 5 nearest neighbors for each test embedding
+    plt.figure(figsize=(12, 10))
     for i in range(5):
-        plt.figure(figsize=(10, 2))
-        plt.suptitle(f'Test Example {i+1}')
-        plt.subplot(1, 6, 1)
+        plt.subplot(5, 6, i*6 + 1)
+        plt.title(f'Example {i+1}')
+        plt.axis('off')
         plt.imshow(test_set.dataset[int(i)]['image'])
         for j, idx in enumerate(indices[i]):
-            plt.subplot(1, 6, j+2)
+            plt.subplot(5, 6, i*6 + j+2)
             plt.imshow(training_set.dataset[int(idx)]['image'])
             plt.title(f'Neighbor {j+1}')
             plt.axis('off')
-        plt.show()
+    plt.show()
+
+    tsne_visualization(test_embeddings, color_label, shape_label)
+    pca_visualization(test_embeddings, color_label, shape_label)
+
+    calc_and_plot_conf_matrix(color_label, color_pred)
+    calc_and_plot_conf_matrix(shape_label, shape_pred)
+    return (color, shape, all)
