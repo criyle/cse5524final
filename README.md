@@ -53,10 +53,9 @@ Variance Auto Encoder
   - Swin Transformer encoder + SimCLR
 -  All the code in the file : [constractive learning.py](./constractive)
 
-
 ## Visualization
 
-TODO
+[plot.ipynb](./plot.ipynb)
 
 ## Workload
 
