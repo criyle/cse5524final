@@ -45,7 +45,7 @@ Variance Auto Encoder
 - CNN-based [variance_auto_encoder_cnn_residual_stride_deep.ipynb](./variance_auto_encoder_cnn_residual_stride_deep.ipynb)
 - Transformer-based [variance_auto_encoder_transformer.ipynb](./variance_auto_encoder_transformer.ipynb)
 
-## Contrastive
+## Contrastive Learning
 
 - This part we totally use three different kinds of models
   - CNN encoder + SimCLR
