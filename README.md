@@ -47,11 +47,12 @@ Variance Auto Encoder
 
 ## Contrastive
 
-TODO
+- This part we totally use three different kinds of models
+  - CNN encoder + SimCLR
+  - ViT encoder + SimCLR
+  - Swin Transformer encoder + SimCLR
+_ All the code in the file : [constractive learning.py](./constractive learning.py)
 
-## ViT
-
-TODO
 
 ## Visualization
 
