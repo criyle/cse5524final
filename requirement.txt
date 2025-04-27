@@ -6,3 +6,5 @@ matplotlib
 datasets
 transformers
 ipywidgets
+seaborn
+scikit-learn

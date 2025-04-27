@@ -1,15 +1,12 @@
 # CSE 5524 Final
 
-## Workload
+## Installation
 
-- [x] Data generation (Yang)
-- [x] Model Training
-  - [x] Baseline (Yang) Targeting Apr 19
-  - [ ] Contrastive Learning (Adrian)
-  - [ ] Advanced models like ViT (Adrian)
-- [ ] Result Visualization (William)
-- [ ] Slides for presentation
-- [ ] Final project report & code submission
+```sh
+# Create python environment
+python -m venv .venv
+pip install -r requirement.txt
+```
 
 ## Dataset
 
@@ -21,18 +18,32 @@
 
 In theory, the dataset could be compressed into [shape, colors, (r, g, b), (x, y, l, a, r)], a 10-dimension embedding for recovery.
 
+```text
+data_generation_1000.ipynb # Generation dataset of 1000
+data_generation_5000.ipynb # Generation dataset of 5000
+data_generation_25000.ipynb # Generation dataset of 25000
+data_generation_75000.ipynb # Generation dataset of 75000
+data_generation_test.ipynb # Generation test dataset of 1000
+```
+
 ## Baseline
 
-CNN-based auto encoder
+CNN-based auto encoder [auto_encoder_cnn.ipynb](./auto_encoder_cnn.ipynb)
 
-- Add Layer Norm
-- Add Residual Connection
-- Add Drop Out
-- Add More Layers
+- Add Layer Norm [auto_encoder_cnn_layernorm.ipynb](./auto_encoder_cnn_layernorm.ipynb)
+- Add Residual Connection [auto_encoder_cnn_residual.ipynb](./auto_encoder_cnn_residual.ipynb)
+- Add Drop Out [auto_encoder_dropout.ipynb](./auto_encoder_dropout.ipynb)
+- Replace Max Pooling with Stride [auto_encoder_residual_sride.ipynb](./auto_encoder_residual_sride.ipynb)
+- More Layers [auto_encoder_residual_sride_deep.ipynb](./auto_encoder_residual_sride_deep.ipynb)
 
 Transformer-based auto encoder
 
+- [auto_encoder_transformer.ipynb](./auto_encoder_transformer.ipynb)
+
 Variance Auto Encoder
+
+- CNN-based [variance_auto_encoder_cnn_residual_stride_deep.ipynb](./variance_auto_encoder_cnn_residual_stride_deep.ipynb)
+- Transformer-based [variance_auto_encoder_transformer.ipynb](./variance_auto_encoder_transformer.ipynb)
 
 ## Contrastive
 
@@ -45,3 +56,14 @@ TODO
 ## Visualization
 
 TODO
+
+## Workload
+
+- [x] Data generation (Yang)
+- [x] Model Training
+  - [x] Baseline (Yang) Targeting Apr 19
+  - [x] Contrastive Learning (Adrian)
+  - [x] Advanced models like ViT (Adrian)
+- [x] Result Visualization (William)
+- [x] Slides for presentation
+- [x] Final project report & code submission
