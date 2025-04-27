@@ -51,7 +51,7 @@ Variance Auto Encoder
   - CNN encoder + SimCLR
   - ViT encoder + SimCLR
   - Swin Transformer encoder + SimCLR
-_ All the code in the file : [constractive learning.py](./constractive learning.py)
+_ All the code in the file : [constractive learning.py](./constractive)
 
 
 ## Visualization
